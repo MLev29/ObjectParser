@@ -32,7 +32,7 @@ void objParser::Model::LoadResource(const char* filename)
 	m_meshData = (objParser::ModelData*) malloc(sizeof(objParser::ModelData));
 	*m_meshData = objParser::ModelData();
 
-	ParseFile(fileData);
+	ParseFileV2(fileData);
 
 	HandleNegativeIndices();
 
@@ -130,6 +130,45 @@ void objParser::Model::ParseFile(FileData const& data)
 	}
 }
 
+void objParser::Model::ParseFileV2(FileData const& data)
+{
+	const char* start = data.m_fileContent;
+	const char* end = start + 1;
+
+	while (*end != '\0')
+	{
+		bool skipLine = true;
+
+		if (*start == 'v' ||
+			*start == 'f')
+		{
+			// skip to next line
+			skipLine = false;
+		}
+
+		if (*end == '\n' || *end == '\r')
+		{
+			// End of line
+
+			// Store line data
+			if (!skipLine)
+			{
+				// Process data into vertex
+				ParseLine(start, end);
+			}
+
+
+			char nextChar = *(end + 1);
+			if (nextChar == '\n')
+				++end;
+
+			if (nextChar != '\0')
+				start = end + 1;
+}
+
+		++end;
+	}
+}
 
 void objParser::Model::Buffers(void)
 {
@@ -156,8 +195,7 @@ void objParser::Model::Buffers(void)
 	vnSize = sizeof(int) * m_meshData->m_normalIndices.Size();
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ebo);
-	//glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(int) * m_meshData->m_indices.Size(), m_meshData->m_indices.m_data, GL_STATIC_DRAW);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, vSize + vtSize + vnSize/*indexTest.size()*/, nullptr/*indexTest.data()*/, GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, vSize + vtSize + vnSize, nullptr, GL_STATIC_DRAW);
 	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, vSize, m_meshData->m_indices.m_data);
 	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, vSize, vtSize, m_meshData->m_texCoordIndices.m_data);
 	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, vSize + vtSize, vnSize, m_meshData->m_normalIndices.m_data);
@@ -230,18 +268,33 @@ void objParser::Model::ParseLine(const char* line)
 
 }
 
-void objParser::Model::ParseVertex(const char* line)
+void objParser::Model::ParseLine(const char* start, const char* end)
 {
-	switch (*(line + 1))
+	switch (*start)
+	{
+		case 'v':
+			ParseVertex(start);
+			break;
+		case 'f':
+			ParseFace(start, end);
+			break;
+		default:
+			break;
+	}
+}
+
+void objParser::Model::ParseVertex(const char* start)
+{
+	switch (*(start + 1))
 	{
 		case ' ':
-			m_meshData->m_positions.Append(StrToVec3(line));
+			m_meshData->m_positions.Append(StrToVec3(start));
 			break;
 		case 'n':
-			m_meshData->m_normals.Append(StrToVec3(line));
+			m_meshData->m_normals.Append(StrToVec3(start));
 			break;
 		case 't':
-			m_meshData->m_texCoords.Append(StrToVec2(line));
+			m_meshData->m_texCoords.Append(StrToVec2(start));
 			break;
 		default:
 			break;
@@ -266,6 +319,50 @@ void objParser::Model::ParseFace(const char* line)
 
 			if (*cursorPos != '\0')
 				start = cursorPos + 1;
+			else
+				break;
+		}
+
+		++cursorPos;
+	}
+
+	// Handle quads / ngons
+	TrigIndices(indices, index);
+
+	// Add to buffer
+	for (int i = 0; i < index; ++i)
+	{
+		// Position index
+		m_meshData->m_indices.Append(indices[i].m_pos - 1);
+
+		// Normal index
+		if (indices[i].m_norm != 0)
+			m_meshData->m_normalIndices.Append(indices[i].m_norm - 1);
+
+		// Texture coordinate index
+		if (indices[i].m_texCoord != 0)
+			m_meshData->m_texCoordIndices.Append(indices[i].m_texCoord - 1);
+	}
+}
+
+void objParser::Model::ParseFace(const char* start, const char* end)
+{
+	const char* startPos = start + 2;
+	const char* cursorPos = startPos;
+
+	Index indices[192];
+	int index = 0;
+
+	while (1)
+	{
+		if (*cursorPos == ' ' ||
+			cursorPos == end)
+		{
+			indices[index] = ParseFaceSegment(startPos, cursorPos);
+			++index;
+
+			if (cursorPos != end)
+				startPos = cursorPos + 1;
 			else
 				break;
 		}
@@ -375,9 +472,9 @@ bool objParser::Model::IsPointInTriangle(objParser::Index* indices, math::Vector
 	return false;
 }
 
-void objParser::Model::SetMemBlockSize(size_t const& charCount)
+void objParser::Model::SetMemBlockSize(int charCount)
 {
-	g_memoryBlockSize = static_cast<int>(charCount * 0.1f);
+	g_memoryBlockSize = charCount / 10;
 }
 
 math::Vector2<float> objParser::Model::StrToVec2(const char* line)

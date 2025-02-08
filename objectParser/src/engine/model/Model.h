@@ -62,44 +62,42 @@ namespace objParser
 	class Model final : public Resource
 	{
 	public:
-							Model(void);
-		virtual				~Model(void) = default;
+								Model(void);
+		virtual					~Model(void) = default;
 
-		virtual void		LoadResource(const char* filename) override;
-		virtual void		Update(Shader* shader) override;
+		virtual void			LoadResource(const char* filename) override;
+		virtual void			Update(Shader* shader) override;
 
-		void				SetPosition(math::Vector3<float> newPos);
-		void				SetScale(math::Vector3<float> newScale);
-		void				SetColor(math::Vector3<float> color);
+		void					SetPosition(math::Vector3<float> newPos);
+		void					SetScale(math::Vector3<float> newScale);
+		void					SetColor(math::Vector3<float> color);
 		math::Matrix4<float>	GetModelMatrix(void) const noexcept;
 	private:
-		void				ParseFile(FileData const& data);
-		void				Buffers(void);
-		void				HandleNegativeIndices(void);
-		void				ParseLine(const char* line);
-		void				ParseVertex(const char* line);
-		void				ParseFace(const char* line);
-		inline objParser::Index	ParseFaceSegment(const char* start, const char* end);
-		void				TrigIndices(objParser::Index* inIndices, int& indexCount);
-		void				HandleQuad(objParser::Index* indices);
-		void				HandlePolygon(objParser::Index* indices);
-		bool				IsPointInTriangle(
-								objParser::Index* indices,
-								math::Vector3<float> const& prevPoint,
-								math::Vector3<float> const& currentPoint,
-								math::Vector3<float> const& nextPoint);
-		void				SetMemBlockSize(size_t const& charCount);
+		void					ParseFile(FileData const& data);
+		void					ParseFileV2(FileData const& data);
+		void					Buffers(void);
+		void					HandleNegativeIndices(void);
+		void					ParseLine(const char* line);
+		void					ParseLine(const char* start, const char* end);
+		void					ParseVertex(const char* start);
+		void					ParseFace(const char* line);
+		void					ParseFace(const char* start, const char* end);
+		objParser::Index		ParseFaceSegment(const char* start, const char* end);
+		void					TrigIndices(objParser::Index* inIndices, int& indexCount);
+		void					HandleQuad(objParser::Index* indices);
+		void					HandlePolygon(objParser::Index* indices, int& count);
+		void					SetMemBlockSize(int charCount);
 
 		math::Vector2<float>	StrToVec2(const char* line);
 		math::Vector3<float>	StrToVec3(const char* line);
 
-		ModelData*			m_meshData;
-		Transform			m_transform;
-		math::Matrix4<float> m_modelMatrix;
-		math::Vector3<float> m_color;
-		unsigned int		m_vao;
-		unsigned int		m_vbo;
-		unsigned int		m_ebo;
-		int					m_indexCount;
+		ModelData*				m_meshData;
+		Transform				m_transform;
+		math::Matrix4<float>	m_modelMatrix;
+		math::Vector3<float>	m_color;
+		unsigned int			m_vao;
+		unsigned int			m_vbo;
+		unsigned int			m_ebo;
+		int						m_indexCount;
 	};
 }
