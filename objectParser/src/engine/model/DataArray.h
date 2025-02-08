@@ -16,8 +16,8 @@ public:
 	DataArray(void);
 	~DataArray(void) = default;
 
-	void Append(T const& data);
-	void Clear(void);
+	void Append(T const& data) noexcept;
+	void Clear(void) noexcept;
 	int Size(void) const noexcept;
 
 	T* m_data;
@@ -34,7 +34,7 @@ inline DataArray<T>::DataArray(void)
 }
 
 template<typename T>
-inline void DataArray<T>::Append(T const& data)
+inline void DataArray<T>::Append(T const& data) noexcept
 {
 	++m_size;
 
@@ -48,7 +48,7 @@ inline void DataArray<T>::Append(T const& data)
 }
 
 template<typename T>
-inline void DataArray<T>::Clear(void)
+inline void DataArray<T>::Clear(void) noexcept
 {
 	if (m_data)
 		free(m_data);
