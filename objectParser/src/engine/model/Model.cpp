@@ -1,6 +1,8 @@
 #include "Model.h"
 #include "Vertex.h"
 
+#include <fast_float/fast_float.h>
+
 #include <iostream>
 
 #include <glad/glad.h>
@@ -164,7 +166,7 @@ void objParser::Model::ParseFileV2(FileData const& data)
 
 			if (nextChar != '\0')
 				start = end + 1;
-}
+		}
 
 		++end;
 	}
@@ -183,7 +185,6 @@ void objParser::Model::Buffers(void)
 	size_t vnSize = sizeof(math::Vector3<float>) * m_meshData->m_normals.Size();
 
 	glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
-	//glBufferData(GL_ARRAY_BUFFER, sizeof(math::Vector3<float>) * m_meshData->m_positions.Size(), &m_meshData->m_positions.m_data[0], GL_STATIC_DRAW);
 	glBufferData(GL_ARRAY_BUFFER, vSize + vtSize + vnSize, nullptr, GL_STATIC_DRAW);
 
 	glBufferSubData(GL_ARRAY_BUFFER, 0, vSize, m_meshData->m_positions.m_data);
@@ -226,7 +227,7 @@ void objParser::Model::HandleNegativeIndices(void)
 			m_meshData->m_indices.m_data[i] = m_meshData->m_positions.Size() + (m_meshData->m_indices.m_data[i] + 1);
 		}
 	}
-
+	
 	// Normal index
 	for (int i = 0; i < m_meshData->m_normalIndices.Size(); ++i)
 	{
@@ -235,7 +236,7 @@ void objParser::Model::HandleNegativeIndices(void)
 			m_meshData->m_normalIndices.m_data[i] = m_meshData->m_normals.Size() + (m_meshData->m_normalIndices.m_data[i] + 1);
 		}
 	}
-
+	
 	// Texture coordinate index
 	for (int i = 0; i < m_meshData->m_texCoordIndices.Size(); ++i)
 	{
@@ -411,7 +412,7 @@ objParser::Index objParser::Model::ParseFaceSegment(const char* start, const cha
 		if (*cursorPos == '/' ||
 			cursorPos == end)
 		{
-			index[i] = strtof(startPos, (char**) &cursorPos);
+			fast_float::from_chars(startPos, cursorPos, index[i], 10);
 			++i;
 
 			if (cursorPos != end &&
@@ -464,10 +465,10 @@ void objParser::Model::HandlePolygon(objParser::Index* indices, int& count)
 	for (int i = 0; i < count; ++i)
 	{
 		inIndices[i] = indices[i];
-}
+	}
 
 	for (int i = 0; i < count - 2; ++i)
-{
+	{
 		indices[newCount]		= inIndices[0];
 		indices[newCount + 1]	= inIndices[i + 1];
 		indices[newCount + 2]	= inIndices[i + 2];
@@ -507,8 +508,7 @@ math::Vector2<float> objParser::Model::StrToVec2(const char* line)
 			*cursorPos != '-' &&
 			*cursorPos != '.')
 		{
-			vec2[index] = strtof(start, (char**) &cursorPos);
-
+			fast_float::from_chars(start, cursorPos, vec2[index]);
 			start = line;
 			++index;
 		}
@@ -543,7 +543,7 @@ math::Vector3<float> objParser::Model::StrToVec3(const char* line)
 			*cursorPos != '-' &&
 			*cursorPos != '.')
 		{
-			vec3[index] = strtof(start, (char**) &cursorPos);
+			fast_float::from_chars(start, cursorPos, vec3[index]);
 
 			start = line;
 			++index;
