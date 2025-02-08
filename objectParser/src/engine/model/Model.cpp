@@ -444,7 +444,7 @@ void objParser::Model::TrigIndices(objParser::Index* inIndices, int& indexCount)
 			indexCount = 6;
 			break;
 		default:
-			HandlePolygon(inIndices);
+			HandlePolygon(inIndices, indexCount);
 			break;
 	}
 }
@@ -456,20 +456,26 @@ void objParser::Model::HandleQuad(objParser::Index* inIndices)
 	inIndices[4] = inIndices[2];
 }
 
-void objParser::Model::HandlePolygon(objParser::Index* indices)
+void objParser::Model::HandlePolygon(objParser::Index* indices, int& count)
 {
-	(void) indices;
-	// TODO: add function
+	int newCount = 0;
+
+	objParser::Index inIndices[64];
+	for (int i = 0; i < count; ++i)
+	{
+		inIndices[i] = indices[i];
 }
 
-bool objParser::Model::IsPointInTriangle(objParser::Index* indices, math::Vector3<float> const& prevPoint, math::Vector3<float> const& currentPoint, math::Vector3<float> const& nextPoint)
+	for (int i = 0; i < count - 2; ++i)
 {
-	(void) indices;
-	(void) prevPoint;
-	(void) currentPoint;
-	(void) nextPoint;
+		indices[newCount]		= inIndices[0];
+		indices[newCount + 1]	= inIndices[i + 1];
+		indices[newCount + 2]	= inIndices[i + 2];
 
-	return false;
+		newCount += 3;
+	}
+
+	count = newCount;
 }
 
 void objParser::Model::SetMemBlockSize(int charCount)
