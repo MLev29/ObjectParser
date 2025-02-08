@@ -1,5 +1,6 @@
 #pragma once
-#include <memory>
+
+#include <stdio.h>
 #include "MemoryCheck.h"
 
 namespace objParser
@@ -7,20 +8,20 @@ namespace objParser
 	struct FileData
 	{
 		FileData(void) = default;
-		FileData(char* fileContent, size_t size)
+		FileData(char* fileContent, int size)
 			: m_fileContent(fileContent), m_size(size)
 		{
 		}
 
-		FileData ReadFile(const char* filePath)
+		FileData& ReadFile(const char* filePath) noexcept
 		{
 			FILE* file;
 			fopen_s(&file, filePath, "rb");
-
+			
 			if (file)
 			{
 				fseek(file, 0, SEEK_END);
-				m_size = ftell(file);
+				m_size = (int) ftell(file);
 
 				m_fileContent = static_cast<char*>(calloc(m_size + 1, sizeof(char)));
 				fseek(file, 0, SEEK_SET);
@@ -32,7 +33,7 @@ namespace objParser
 			return *this;
 		}
 
-		void Clear(void)
+		void Clear(void) noexcept
 		{
 			if (m_fileContent)
 				free(m_fileContent);
@@ -41,7 +42,7 @@ namespace objParser
 			m_size = 0;
 		}
 
-		char* m_fileContent;
-		size_t m_size;
+		char*	m_fileContent;
+		int		m_size;
 	};
 }
