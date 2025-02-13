@@ -15,8 +15,9 @@
 /*
 *	TODO:
 *	- Handle clearing memory	DONE
-*	- Handle polygons (ngons)
+*	- Handle polygons (ngons)	DONE
 *	- Handle negative indices	DONE
+*	- Handle material files
 */
 
 namespace objParser
@@ -73,14 +74,11 @@ namespace objParser
 		void					SetColor(math::Vector3<float> color);
 		math::Matrix4<float>	GetModelMatrix(void) const noexcept;
 	private:
-		void					ParseFile(FileData const& data);
 		void					ParseFileV2(FileData const& data);
 		void					Buffers(void);
-		void					HandleNegativeIndices(void);
-		void					ParseLine(const char* line);
+		void					HandleNegativeIndices(int& index, int type);
 		void					ParseLine(const char* start, const char* end);
 		void					ParseVertex(const char* start);
-		void					ParseFace(const char* line);
 		void					ParseFace(const char* start, const char* end);
 		objParser::Index		ParseFaceSegment(const char* start, const char* end);
 		void					TrigIndices(objParser::Index* inIndices, int& indexCount);

@@ -36,8 +36,6 @@ void objParser::Model::LoadResource(const char* filename)
 
 	ParseFileV2(fileData);
 
-	HandleNegativeIndices();
-
 	Buffers();
 
 	m_meshData->PostLoad(m_indexCount);
@@ -87,49 +85,6 @@ math::Matrix4<float> objParser::Model::GetModelMatrix(void) const noexcept
 	modelMatrix.m_matrix[2][2] = m_transform.m_scale[2];
 
 	return modelMatrix.Transpose();
-}
-
-void objParser::Model::ParseFile(FileData const& data)
-{
-	const char* start = data.m_fileContent;
-	const char* end = start + 1;
-	char line[1024];
-
-	while (*end != '\0')
-	{
-		bool skipLine = true;
-
-		if (*start == 'v' ||
-			*start == 'f')
-		{
-			// skip to next line
-			skipLine = false;
-		}
-
-		if (*end == '\n' || *end == '\r')
-		{
-			// End of line
-
-			// Store line data
-			if (!skipLine)
-			{
-				strncpy_s(line, start, end - start);
-
-				// Process data into vertex
-				ParseLine(line);
-			}
-
-
-			char nextChar = *(end + 1);
-			if (nextChar == '\n')
-				++end;
-
-			if (nextChar != '\0')
-				start = end + 1;
-		}
-
-		++end;
-	}
 }
 
 void objParser::Model::ParseFileV2(FileData const& data)
@@ -212,61 +167,22 @@ void objParser::Model::Buffers(void)
 	glBindVertexArray(0);
 }
 
-void objParser::Model::HandleNegativeIndices(void)
+void objParser::Model::HandleNegativeIndices(int& index, int type)
 {
-	/*
-	*	Handle negative indices which are processed
-	*	as an offset from the end of the vertex list
-	*/
-
-	// Position index
-	for (int i = 0; i < m_meshData->m_indices.Size(); ++i)
+	switch (type)
 	{
-		if (m_meshData->m_indices.m_data[i] < 0)
-		{
-			m_meshData->m_indices.m_data[i] = m_meshData->m_positions.Size() + (m_meshData->m_indices.m_data[i] + 1);
-		}
-	}
-	
-	// Normal index
-	for (int i = 0; i < m_meshData->m_normalIndices.Size(); ++i)
-	{
-		if (m_meshData->m_normalIndices.m_data[i] < 0)
-		{
-			m_meshData->m_normalIndices.m_data[i] = m_meshData->m_normals.Size() + (m_meshData->m_normalIndices.m_data[i] + 1);
-		}
-	}
-	
-	// Texture coordinate index
-	for (int i = 0; i < m_meshData->m_texCoordIndices.Size(); ++i)
-	{
-		if (m_meshData->m_texCoordIndices.m_data[i] < 0)
-		{
-			m_meshData->m_texCoordIndices.m_data[i] = m_meshData->m_texCoords.Size() + (m_meshData->m_texCoordIndices.m_data[i] + 1);
-		}
-	}
-}
-
-
-void objParser::Model::ParseLine(const char* line)
-{
-	// f 
-	// v
-		// v 
-		// vt
-		// vn
-	switch (*line)
-	{
-		case 'v':
-			ParseVertex(line);
+		case 0: // Position index
+			index = m_meshData->m_positions.Size() + index + 1;
 			break;
-		case 'f':
-			ParseFace(line);
+		case 1: // Texture index
+			index = m_meshData->m_texCoords.Size() + index + 1;
+			break;
+		case 2: // Normal index
+			index = m_meshData->m_normals.Size() + index + 1;
 			break;
 		default:
 			break;
 	}
-
 }
 
 void objParser::Model::ParseLine(const char* start, const char* end)
@@ -299,50 +215,6 @@ void objParser::Model::ParseVertex(const char* start)
 			break;
 		default:
 			break;
-	}
-}
-
-void objParser::Model::ParseFace(const char* line)
-{
-	const char* start = line + 2;
-	const char* cursorPos = start;
-	
-	Index indices[64];
-	int index = 0;
-
-	while (1)
-	{
-		if (*cursorPos == ' ' ||
-			*cursorPos == '\0')
-		{
-			indices[index] = ParseFaceSegment(start, cursorPos);
-			++index;
-
-			if (*cursorPos != '\0')
-				start = cursorPos + 1;
-			else
-				break;
-		}
-
-		++cursorPos;
-	}
-
-	// Handle quads / ngons
-	TrigIndices(indices, index);
-
-	// Add to buffer
-	for (int i = 0; i < index; ++i)
-	{
-		// Position index
-		m_meshData->m_indices.Append(indices[i].m_pos - 1);
-
-		// Normal index
-		if (indices[i].m_norm != 0)
-			m_meshData->m_normalIndices.Append(indices[i].m_norm - 1);
-
-		// Texture coordinate index
-		if (indices[i].m_texCoord != 0)
-			m_meshData->m_texCoordIndices.Append(indices[i].m_texCoord - 1);
 	}
 }
 
@@ -413,6 +285,11 @@ objParser::Index objParser::Model::ParseFaceSegment(const char* start, const cha
 			cursorPos == end)
 		{
 			fast_float::from_chars(startPos, cursorPos, index[i], 10);
+
+			// Negative index
+			if (index[i] < 0)
+				HandleNegativeIndices(index[i], i);
+
 			++i;
 
 			if (cursorPos != end &&
@@ -487,8 +364,8 @@ void objParser::Model::SetMemBlockSize(int charCount)
 math::Vector2<float> objParser::Model::StrToVec2(const char* line)
 {
 	math::Vector2<float> vec2;
-	const char* cursorPos = line + 4;
-	const char* start = line + 3;
+	const char* cursorPos = line + 3;
+	const char* start = line;
 	int index = 0;
 
 	while (index < 2)
@@ -522,8 +399,8 @@ math::Vector2<float> objParser::Model::StrToVec2(const char* line)
 math::Vector3<float> objParser::Model::StrToVec3(const char* line)
 {
 	math::Vector3<float> vec3;
-	const char* cursorPos = line + 3;
-	const char* start = line + 2;
+	const char* cursorPos = line + 2;
+	const char* start = line;
 	int index = 0;
 
 	while (index < 3)
@@ -544,7 +421,7 @@ math::Vector3<float> objParser::Model::StrToVec3(const char* line)
 			*cursorPos != '.')
 		{
 			fast_float::from_chars(start, cursorPos, vec3[index]);
-
+			//vec3[index] = strtof(start, (char**) &cursorPos);
 			start = line;
 			++index;
 		}
