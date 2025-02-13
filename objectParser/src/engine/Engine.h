@@ -10,7 +10,7 @@
 #include "tools/MemoryCheck.h"
 
 #ifndef MESH_FILL
-#define MESH_FILL 1
+#define MESH_FILL 0
 #endif
 
 namespace objParser
@@ -35,7 +35,7 @@ namespace objParser
 		void		Input(void);
 		math::Vector2<float> GetCursorPos(void) const noexcept;
 
-		Camera*				m_camera;
+		objParser::Camera*	m_camera;
 		Shader*				m_shader;
 		GLFWwindow*			m_windowPtr;
 		math::Vector2<int>	m_windowSize;

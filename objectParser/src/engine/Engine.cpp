@@ -5,7 +5,7 @@
 #include <chrono>
 #include <iostream>
 
-#define MODEL_1 "bunny.obj"
+#define MODEL_1 "locomotive.obj"
 
 
 objParser::Engine::Engine(math::Vector2<int> const& windowSize)
@@ -22,7 +22,7 @@ int objParser::Engine::Init(void)
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	m_windowPtr = glfwCreateWindow(m_windowSize[0], m_windowSize[1], "Shadow Mapping", NULL, NULL);
+	m_windowPtr = glfwCreateWindow(m_windowSize[0], m_windowSize[1], "Object Parser", NULL, NULL);
 	if (m_windowPtr == NULL)
 	{
 		std::cout << "Failed to create GLFW window" << std::endl;
@@ -31,6 +31,7 @@ int objParser::Engine::Init(void)
 	}
 
 	glfwMakeContextCurrent(m_windowPtr);
+	glfwSetWindowUserPointer(m_windowPtr, reinterpret_cast<void*>(this));
 	glfwSetFramebufferSizeCallback(m_windowPtr, SFrameBufferCallback);
 
 	// Init GLAD
@@ -58,7 +59,7 @@ int objParser::Engine::Init(void)
 
 	ResourceManager::GetInstance()->GetResource<Model>(MODEL_1)->SetColor({0.0f, 0.04f, 1.0f});
 	
-	m_camera = new Camera(math::Vector3<float>::Zero(), 5.0f);
+	m_camera = new objParser::Camera(math::Vector3<float>(0.0f), 1.0f);
 	glfwSetInputMode(m_windowPtr, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	return 0;
@@ -73,7 +74,7 @@ void objParser::Engine::Update(float deltaTime)
 	static float denominator = 1.0f / m_windowSize[0];
 	const float aspectRatio = static_cast<float>(m_windowSize[0] * denominator);
 
-	glClearColor(0.0f, 0.26f, 0.26f, 1.0f);
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	math::Matrix4<float> perspective = m_camera->GetPerspectiveMatrix(0.01f, 100.0f, 60.0f, aspectRatio);
@@ -84,6 +85,7 @@ void objParser::Engine::Update(float deltaTime)
 	m_shader->Use();
 	m_shader->SetMatrix4("view", &view);
 	m_shader->SetMatrix4("projection", &perspective);
+	//m_camera->Update(m_shader, m_windowSize);
 	m_shader->SetVec3("viewPos", m_camera->GetPosition());
 	m_shader->SetBool("isTextured", false);
 	m_shader->SetVec3("lightColor", lightColor);
