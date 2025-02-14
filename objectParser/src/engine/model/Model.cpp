@@ -418,10 +418,11 @@ math::Vector3<float> objParser::Model::StrToVec3(const char* line)
 			(*cursorPos < '0' ||
 			*cursorPos > '9') &&
 			*cursorPos != '-' &&
-			*cursorPos != '.')
+			*cursorPos != '.' &&
+			*cursorPos != 'e')
 		{
-			fast_float::from_chars(start, cursorPos, vec3[index]);
-			//vec3[index] = strtof(start, (char**) &cursorPos);
+			fast_float::from_chars(start, cursorPos, vec3[index], fast_float::chars_format::json);
+
 			start = line;
 			++index;
 		}
