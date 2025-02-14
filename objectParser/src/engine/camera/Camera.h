@@ -31,12 +31,9 @@ namespace objParser
 		math::Vector3<float>	m_up;
 		math::Vector3<float>	m_right;
 		math::Vector3<float>	m_forward;
-		math::Vector2<float>	m_lastCursorPos;
 
-		// Transformation
+		// Config
 		float					m_speed;
 		float					m_angularSpeed;
-		float					m_yaw;
-		float					m_pitch;
 	};
 }

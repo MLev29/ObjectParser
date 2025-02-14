@@ -6,8 +6,7 @@
 #include <iostream>
 
 objParser::Camera::Camera(math::Vector3<float> position, float speed)
-	: m_position(position), m_speed(speed), m_angularSpeed(5.0f),
-	m_yaw(0.0f), m_pitch(0.0f)
+	: m_position(position), m_speed(speed), m_angularSpeed(5.0f)
 {
 	m_up = math::Vector3<float>::Up();
 	m_forward = -math::Vector3<float>::Forward();
@@ -84,8 +83,11 @@ void objParser::Camera::CameraInput(GLFWwindow* windowPtr, float deltaTime)
 
 void objParser::Camera::MouseMotion(math::Vector2<float> const& cursorPos, float deltaTime)
 {
+	static math::Vector2<float> lastCursorPos(cursorPos);
+	static float yaw, pitch = 0.0f;
+
 	// Calculate delta mouse position
-	math::Vector2<float> deltaPos = (cursorPos - m_lastCursorPos) * deltaTime;
+	math::Vector2<float> deltaPos = (cursorPos - lastCursorPos) * deltaTime;
 
 	// Prevent large numbers such as garbage data for yaw & pitch
 
@@ -95,19 +97,19 @@ void objParser::Camera::MouseMotion(math::Vector2<float> const& cursorPos, float
 		deltaPos[1] = (deltaPos[1] < 0.0f) ? -3.0f : 3.0f;
 
 	// Assign last cursor value
-	m_lastCursorPos = cursorPos;
+	lastCursorPos = cursorPos;
 
 	// Update yaw & pitch
-	m_yaw += deltaPos[0] * m_angularSpeed;
-	m_pitch -= deltaPos[1] * m_angularSpeed;
+	yaw += deltaPos[0] * m_angularSpeed;
+	pitch -= deltaPos[1] * m_angularSpeed;
 
 	// Wrap yaw & pitch from 0 - 360 degrees
-	m_yaw = fmodf(m_yaw, 360.0f);
-	m_pitch = fmodf(m_pitch, 360.0f);
+	yaw = fmodf(yaw, 360.0f);
+	pitch = fmodf(pitch, 360.0f);
 
 	// Convert degree to radian
-	const float yawRad = m_yaw * DEG2RAD;
-	const float pitchRad = m_pitch * DEG2RAD;
+	const float yawRad = yaw * DEG2RAD;
+	const float pitchRad = pitch * DEG2RAD;
 
 	// Rotate camera via pitch & yaw values
 	m_forward = LibMath::Vector3(
