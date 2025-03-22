@@ -14,4 +14,4 @@ This is a personal project I made with the goal to see how fast I can load a `.o
 
 ## Future Plans
 - Implement multi thread object loading
-- Seperate wavefront loader into its own static library
+- Separate wavefront loader into its own static library
