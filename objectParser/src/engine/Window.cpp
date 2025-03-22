@@ -1,11 +1,11 @@
-#include "Engine.h"
+#include "Window.h"
 #include "resourceManager/ResourceManager.h"
 #include "model/Model.h"
 
 #include <chrono>
 #include <iostream>
 
-#define MODEL_1 "locomotive.obj"
+#define MODEL_1 "bunny.obj"
 
 
 objParser::Engine::Engine(math::Vector2<int> const& windowSize)
